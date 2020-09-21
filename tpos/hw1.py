@@ -11,13 +11,35 @@ import os
 IP = socket.gethostbyname(socket.gethostname())
 
 
-def start(num_users, port, session_name, token="", base_dir='./'):
+def start(num_users, port, session_name, token="", base_dir='./', isOne=False):
     """
     Запустить $num_users ноутбуков. У каждого рабочая директория $base_dir+$folder_num
     """
     server = libtmux.Server()
     session = server.find_where({ "session_name": session_name})
     
+    if isOne:
+        path = os.path.join(base_dir, str(num_users))
+        if not os.path.exists(path):
+            os.makedirs(path)
+        
+        window_name = session_name + str(num_users)
+
+        # Если такое существуют
+        if window_name in str(session.windows):
+            print("This window name is exist")
+            return
+            
+        window = session.new_window(attach=False, window_name=window_name)
+        pane = window.select_pane(0)
+        # Запускаем Jupyter Notebook
+        pane.send_keys("jupyter-notebook --ip {IP} --port {port} --no-browser --NotebookApp.token={token} --NotebookApp.notebook_dir={path}".format(
+            IP=IP, port=port, token=token, path=path
+            ),
+            enter=True)
+        
+        return
+
     for i in tqdm(range(num_users)):
         
         path = os.path.join(base_dir, str(i))
@@ -85,13 +107,14 @@ if __name__ == "__main__":
     parser.add_argument('--base-dir', action="store", dest="base_dir", default='./', type=str, help="The main directory")
     parser.add_argument('--session_name', action="store", dest="session_name", default='jupyter_session', type=str, help="Session name in tmux")
     parser.add_argument('--num', action="store", dest="num", default='0', type=str, help="Window number in the session")
+    parser.add_argument('--isOne', action="store", dest="isOne", default=False, type=bool, help="Create certain notebook")
     
     args = parser.parse_args()
 
     func = FUNCTION_MAP[args.command]
 
     if func == start:
-       start(num_users=args.num_users, port=args.port, session_name=args.session_name, token=args.token, base_dir=args.base_dir)
+       start(num_users=args.num_users, port=args.port, session_name=args.session_name, token=args.token, base_dir=args.base_dir, isOne=args.isOne)
     elif func == stop:
         stop(session_name=args.session_name, num=args.num)
     elif func == stop_all:
