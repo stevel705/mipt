@@ -1,0 +1,38 @@
+version: '3.5'
+services:
+  db:
+    container_name: db
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "postgres"
+    
+  worker0:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: worker0
+    volumes:
+      - ./data/:/data/
+    command: python data_loader.py
+    depends_on:
+      - db
+      
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: server
+    volumes:
+      - ./data/:/app/data/
+    ports:
+      - 5000:5000
+    command: uvicorn main:app --host 0.0.0.0 --port 5000
+    depends_on:
+      - db
+
+

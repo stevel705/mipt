@@ -1,0 +1,23 @@
+# Pull base image
+FROM python:3.7
+
+
+# PYTHONUNBUFFERED гарантирует, что наш вывод консоли выглядит знакомым 
+# и не буферизируется Docker,что нам не нужно. 
+# PYTHONDONTWRITEBYTECODE означает, что Python не будет пытаться 
+# создавать файлы .pyc, которые мы также не желаем.
+
+# Set environment varibles
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# WORKDIR /code/
+
+# RUN apt-get update
+COPY ./app /app
+COPY ./settings.py /app/settings.py
+WORKDIR /app
+
+RUN pip install -r requirements.txt
+
+# EXPOSE 8000
