@@ -8,6 +8,7 @@ from sqlalchemy import Column, String, Integer, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
+# Table model
 class HomeTable(Base):
     __tablename__ = 'hometable'
     word = Column(String, primary_key=True)
@@ -16,6 +17,7 @@ class HomeTable(Base):
     def as_dict(self):
        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
+# Configuration for connecting to the database
 class PostgresConfiguration:
     POSTGRES_USER = config("POSTGRES_USER", default="postgres")
     POSTGRES_DB_PASSWORD = config("POSTGRES_DB_PASSWORD", default="postgres")

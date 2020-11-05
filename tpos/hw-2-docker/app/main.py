@@ -32,7 +32,7 @@ def get_all_items():
 
 @app.get('/health')
 def hello():
-    """Test endpoint""" 
+    """Возвращает статус 200""" 
     return {'status': 200}
 
 

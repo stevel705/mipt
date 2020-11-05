@@ -1,4 +1,4 @@
-version: '3.5'
+version: '2.3'
 services:
   db:
     container_name: db
@@ -10,6 +10,9 @@ services:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
       POSTGRES_DB: "postgres"
+    networks: 
+      back:
+        ipv4_address: 10.0.0.20
     
   worker0:
     build:
@@ -17,8 +20,11 @@ services:
       dockerfile: Dockerfile.worker
     container_name: worker0
     volumes:
-      - ./data/:/data/
+      - ./data/:/loader/data/
     command: python data_loader.py
+    networks: 
+      back:
+        ipv4_address: 10.0.0.21
     depends_on:
       - db
       
@@ -27,12 +33,35 @@ services:
       context: .
       dockerfile: Dockerfile.server
     container_name: server
-    volumes:
-      - ./data/:/app/data/
     ports:
       - 5000:5000
-    command: uvicorn main:app --host 0.0.0.0 --port 5000
+    command: uvicorn main:app --host 192.168.0.4 --port 5000
+    networks: 
+      back:
+        ipv4_address: 10.0.0.22
+      front:
+        ipv4_address: 192.168.0.4
     depends_on:
       - db
 
 
+networks:
+  front:
+    # external: true
+    driver: macvlan
+    driver_opts:
+      parent: wlp2s0  # your ethernet interface
+    ipam:
+      # driver: default
+      config:
+        - subnet: "192.168.0.0/24"
+          gateway: "192.168.0.1"
+          ip_range: "192.168.0.254/32"
+  back:
+    driver: macvlan
+    # driver_opts:
+    #   parent: wlp2s0  # your ethernet interface
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.0.12/24
