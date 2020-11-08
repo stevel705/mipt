@@ -10,8 +10,18 @@ engine = create_engine(pg.postgres_db_path)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+def identify_header(path, n=5, th=0.9):
+    df1 = pd.read_csv(path, header='infer', nrows=n)
+    df2 = pd.read_csv(path, header=None, nrows=n)
+    sim = (df1.dtypes.values == df2.dtypes.values).mean()
+    return 1 if sim < th else 0
+
+path_data = "data/data.csv"
+skiprow = identify_header(path_data) # check header on csv file and skip row if need 
+
 # Read csv and write to database's table. If exists, then replace 
-df = pd.read_csv("data/data.csv",header=None, names=['word', 'number'])
+df = pd.read_csv(path_data,header=None, names=['word', 'number'], skiprows=skiprow)
+print(df)
 df.to_sql('hometable', engine, if_exists='replace')
 print("Recorded csv to table in postgre........")
 

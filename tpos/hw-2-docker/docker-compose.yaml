@@ -35,28 +35,24 @@ services:
     container_name: server
     ports:
       - 5000:5000
-    command: uvicorn main:app --host 192.168.0.4 --port 5000
+    command: uvicorn main:app --host 172.16.238.25 --port 5000
     networks: 
       back:
         ipv4_address: 10.0.0.22
-      front:
-        ipv4_address: 192.168.0.4
+      front: 
+        ipv4_address: 172.16.238.25
     depends_on:
       - db
 
 
 networks:
   front:
-    # external: true
-    driver: macvlan
-    driver_opts:
-      parent: wlp2s0  # your ethernet interface
+    driver: bridge
     ipam:
-      # driver: default
+      driver: default
       config:
-        - subnet: "192.168.0.0/24"
-          gateway: "192.168.0.1"
-          ip_range: "192.168.0.254/32"
+        - subnet: "172.16.238.0/24"
+
   back:
     driver: macvlan
     # driver_opts:

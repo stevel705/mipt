@@ -14,6 +14,9 @@
 
 ## Run
 
+Перед запуском, положить csv файл в папку data.
+
+
 Запуск docker-compose с последующим удалением контейнеров
 ```
 docker-compose up --build && docker-compose rm -fsv
@@ -23,12 +26,12 @@ docker-compose up --build && docker-compose rm -fsv
 
 Получение всех данных в виде JSON
 ```
-GET 0.0.0.0:5000/
+GET 172.16.238.25:5000/
 ```
 
 Возвращает 200
 ```
-GET 0.0.0.0:5000/health
+GET 172.16.238.25:5000/health
 ```
 
 Удаление образов с тегом ```<None>```
