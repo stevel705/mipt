@@ -1,0 +1,100 @@
+---
+# tasks file for nginx
+  - name: ensure nginx is at the latest version
+    apt: name=nginx state=latest
+    register: nginx_installed
+    become: yes
+    notify:
+      - Nginx restart
+
+  - name: copy the service_state to opt
+    when: nginx_installed is succeeded
+    template:
+       src: templates/service_state
+       dest: "/opt/service_state"
+       force: no # Если файл уже есть, то не заменять
+    become: yes
+    register: service_state_copy
+
+  - name: Cron job for rewrite uptime in service_state every minutes"
+    become: yes
+    cron:
+      name: "Rewrite uptime"
+      minute: "*"
+      hour: "*"
+      day: "*"
+      month: "*"
+      weekday: "*"
+      job: sed -i "s/is .*$/is $(($(ps -o etimes= -p $(cat /var/run/nginx.pid)) / 60)) minutes/" /opt/service_state
+    register: cron_job
+
+### Этот блок кода я взял у другого человека. 
+  - block:
+    - name: get a start state
+      shell:
+        cmd: 'head -n 2 {{destination_service_state}} | tail -n 1 | grep -o "[0-9]*"'
+      register: start_service_state
+      become: yes 
+
+    - name: Waiting update
+      pause:
+        minutes: 1
+
+    - name: get state for a test cron
+      shell:
+        cmd: 'head -n 2 {{destination_service_state}} | tail -n 1 | grep -o "[0-9]*"'
+      register: end_service_state
+      become: yes   
+
+    - name: checking the cron job
+      fail:
+        msg: Cron job not works (start service state == end service state)
+      when: start_service_state.stdout == end_service_state.stdout
+
+    - name: checking that the cron job is working
+      debug:
+        msg: Cron job works (start service state != end service state)
+      when: start_service_state.stdout != end_service_state.stdout
+
+    when: cron_job.changed == true 
+
+
+  - name: copy the nginx config file and restart nginx
+    when: nginx_installed is succeeded
+    template:
+       src: templates/nginx.conf
+       dest: "/etc/nginx/sites-available/static_site.conf"
+    become: yes
+    register: nginx_conf_copy
+
+  - name: create symlink
+    when: nginx_conf_copy is succeeded
+    file:
+      src: /etc/nginx/sites-available/static_site.conf
+      dest: /etc/nginx/sites-enabled/default
+      state: link
+    become: yes
+    
+  - name: check and reload
+    become: yes
+    when: nginx_conf_copy.changed
+    shell: /usr/sbin/nginx -t
+    notify:
+      - Nginx reload
+
+
+  - name: read first string from dist service state 
+    shell:
+      cmd: 'head -n 1 /opt/service_state'
+    register: first_string_dist
+    become: yes   
+  
+  - name: update file
+    shell: ':'
+    when: first_string_service_state != first_string_dist.stdout
+    notify:  
+      - Update file
+      - Nginx restart
+
+
+# sudo apt-get purge nginx nginx-common

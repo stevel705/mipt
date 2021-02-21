@@ -1,0 +1,5 @@
+---
+# vars file for nginx
+service_state_file              : templates/service_state
+destination_service_state       : /opt/service_state
+first_string_service_state      : "{{ lookup('file', service_state_file).splitlines()[0] }}"
