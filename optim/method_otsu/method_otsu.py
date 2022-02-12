@@ -2,7 +2,7 @@
 # 
 import sys, os.path, cv2, numpy as np
 import pylab as plt
-
+import time
 
 def otsu(img: np.ndarray) -> np.ndarray:
     threshold = -1
@@ -19,17 +19,21 @@ def otsu(img: np.ndarray) -> np.ndarray:
     
     hist = [0] * (max_intensity + 1)
 
+    width = range(img.shape[0])
+    height = range(img.shape[1])
+    max_intensity_list = range(max_intensity + 1)
+    
     # compute the image histogram
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
+    for i in width:
+        for j in height:
             value = img[i,j]
             hist[value] += 1
     
     # auxiliary value for computing m2
-    for i in range(max_intensity + 1):
+    for i in max_intensity_list:
         sum += i * hist[i]
 
-    for t in range(max_intensity + 1):
+    for t in max_intensity_list:
         # update qi(t)
         q1 += hist[t] 
         if q1 == 0:
@@ -61,8 +65,8 @@ def otsu(img: np.ndarray) -> np.ndarray:
     #         maxValueIndex = i     
 
     # build the segmented image
-    for i in range(img.shape[0]):
-        for j in range(img.shape[1]):
+    for i in width:
+        for j in height:
             if img[i,j] > threshold:
                 output_image[i, j] = 255
             else:
@@ -87,8 +91,9 @@ def main():
     assert os.path.exists(src_path)
     img = cv2.imread(src_path, cv2.IMREAD_GRAYSCALE)
     assert img is not None
-
+    # start_time = time.time()
     result = otsu(img)
+    # print("--- %s seconds ---" % (time.time() - start_time))
     cv2.imwrite(dst_path, result)
 
 
